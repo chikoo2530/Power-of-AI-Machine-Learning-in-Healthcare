@@ -1,0 +1,44 @@
+{% extends "user_layout.html" %}
+
+{% block title %}
+Notifications — MedAI Predict
+{% endblock %}
+
+{% block header %}
+Notifications
+{% endblock %}
+
+{% block content %}
+
+<div class="notify-container">
+
+    <h2>Your Notifications</h2>
+
+    {% if notifications %}
+        {% for n in notifications %}
+        <div class="notify-card">
+            🔔 {{ n[0] }}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No notifications available</p>
+    {% endif %}
+
+</div>
+
+<style>
+.notify-container{
+    max-width:700px;
+    margin:auto;
+}
+
+.notify-card{
+    background:rgba(255,255,255,0.8);
+    padding:15px;
+    margin:10px 0;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+</style>
+
+{% endblock %}
