@@ -1,0 +1,236 @@
+{% extends "user_layout.html" %}
+
+{% block title %}
+Medical History
+{% endblock %}
+
+{% block header %}
+Medical History
+{% endblock %}
+
+{% block content %}
+
+<div class="history-container">
+
+   
+
+    <!-- SEARCH + FILTER -->
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchTable()">
+
+        <select id="filterDisease" onchange="filterDisease()">
+            <option value="">All Diseases</option>
+            <option value="heart">Heart</option>
+            <option value="diabetes">Diabetes</option>
+        </select>
+    </div>
+
+    {% if history %}
+
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Disease</th>
+                <th>Result</th>
+                <th>Probability</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for row in history %}
+            <tr>
+
+                <!-- Disease -->
+                <td>{{ row[1] }}</td>
+
+                <!-- Result -->
+                <td class="{% if 'High' in row[2] %}danger{% else %}safe{% endif %}">
+    {{ row[2] }}
+</td>
+
+                <!-- Probability (FIXED HERE) -->
+               <td>
+    {% set prob = row[3] | float %}
+
+    {% if prob > 70 %}
+        {% set color = '#ff4d4d' %}
+    {% elif prob > 40 %}
+        {% set color = '#ffcc00' %}
+    {% else %}
+        {% set color = '#2bb673' %}
+    {% endif %}
+
+    <div style="width:100%; background:#eee; height:6px; border-radius:10px; margin-bottom:4px;">
+    <div style="width: {{ prob }}%;
+                height:6px;
+                border-radius:10px;
+                background: {{ color }};">
+    </div>
+</div>
+    
+
+    <small>{{ prob|round(2) }}%</small>
+</td>
+                <!-- Date -->
+                <td>
+    {% set parts = row[4].split(" ") %}
+
+    {{ parts[0] }}
+
+    {% if parts|length > 1 %}
+        <br>
+        <small style="color:#6b8f89;">
+            {{ parts[1][:5] }}
+        </small>
+    {% endif %}
+</td>
+
+                <!-- Action -->
+                <td>
+                    <a href="/delete_report/{{ row[0] }}" 
+   class="delete-btn"
+   onclick="return confirm('Delete this record?')">
+   Delete
+</a>
+                </td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+
+    <div class="empty-box">
+        <h3>No medical history found</h3>
+        <p>Your prediction results will appear here</p>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<!-- ===== CSS ===== -->
+<style>
+.history-container{
+    background:rgba(255,255,255,0.75);
+    backdrop-filter:blur(24px);
+    border-radius:20px;
+    padding:30px;
+}
+
+/* TOP BAR */
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+/* CONTROLS */
+.controls{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+.controls input, .controls select{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:13px;
+}
+
+/* TABLE */
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th{
+    text-align:left;
+    padding:12px;
+    background:#eaf5f2;
+    font-size:14px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+tr:hover{
+    background:#f9fdfc;
+}
+
+/* STATUS BADGES */
+.safe{
+    background:#e6f7f0;
+    color:#2bb673;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    display:inline-block;
+}
+
+.danger{
+    background:#ffe6e6;
+    color:#ff4d4d;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    display:inline-block;
+}
+
+/* BUTTONS */
+.delete-btn{
+    background:#ff4d4d;
+    color:white;
+    padding:6px 10px;
+    border-radius:6px;
+    text-decoration:none;
+    font-size:12px;
+}
+
+.download-btn{
+    background:#5CB8A5;
+    color:white;
+    padding:10px 15px;
+    border-radius:8px;
+    text-decoration:none;
+}
+
+/* EMPTY */
+.empty-box{
+    text-align:center;
+    padding:40px;
+    color:#6b8f89;
+}
+</style>
+
+<!-- ===== JS ===== -->
+<script>
+function searchTable(){
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll("#historyTable tbody tr");
+
+    rows.forEach(row => {
+        let text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
+}
+
+function filterDisease(){
+    let filter = document.getElementById("filterDisease").value.toLowerCase();
+    let rows = document.querySelectorAll("#historyTable tbody tr");
+
+    rows.forEach(row => {
+        let disease = row.cells[0].innerText.toLowerCase();
+        row.style.display = (filter === "" || disease.includes(filter)) ? "" : "none";
+    });
+}
+</script>
+
+{% endblock %}
