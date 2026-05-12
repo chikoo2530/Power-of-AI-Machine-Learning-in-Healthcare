@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Notifications — MedAI Predict</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #e8f4f0;
+    color: #1a3a35;
+    overflow: hidden;
+}
+
+/* ── 3D BACKGROUND LAYERS ── */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    background: 
+        radial-gradient(ellipse at 20% 50%, rgba(125, 211, 192, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(168, 216, 234, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(232, 165, 152, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* ── GLASS SIDEBAR ── */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(255, 255, 255, 0.5);
+    color: #1a3a35;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 30px 15px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 4px 0 24px rgba(92, 184, 165, 0.05);
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: #5CB8A5;
+    border-radius: 10px;
+}
+
+.sidebar h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a3a35;
+    margin-bottom: 30px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.sidebar h2 svg {
+    color: #5CB8A5;
+}
+
+.menu {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 80px;
+}
+
+.menu h4 {
+    color: #7a9e98;
+    margin-left: 15px;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    color: #4a7c74;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.menu a svg {
+    width: 18px;
+    height: 18px;
+    color: #a3c4be;
+    transition: color 0.3s;
+}
+
+.menu a:hover {
+    background: rgba(92, 184, 165, 0.1);
+    color: #1a3a35;
+    transform: translateX(4px);
+}
+
+.menu a:hover svg {
+    color: #5CB8A5;
+}
+
+.menu a.active {
+    background: linear-gradient(135deg, #5CB8A5, #7DD3C0);
+    color: white;
+    box-shadow: 0 4px 12px rgba(92, 184, 165, 0.25);
+}
+
+.menu a.active svg {
+    color: white;
+}
+
+.logout {
+    margin-top: auto;
+    background: rgba(255, 75, 43, 0.1) !important;
+    color: #ff4b2b !important;
+}
+.logout:hover {
+    background: rgba(255, 75, 43, 0.2) !important;
+}
+.logout svg {
+    color: #ff4b2b !important;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+    margin-left: 260px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.header {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    color: #1a3a35;
+    padding: 24px 40px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.content {
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+/* ── FORM STYLES ── */
+.form-wrapper {
+    width: 100%;
+    max-width: 1000px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 35px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 20px rgba(92, 184, 165, 0.08);
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.form-header {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
+    margin-bottom: 25px;
+    color: #1a3a35;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(92, 184, 165, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a3a35;
+}
+
+.form-control {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(92, 184, 165, 0.2);
+    background: rgba(255, 255, 255, 0.8);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: #1a3a35;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: #5CB8A5;
+    box-shadow: 0 0 0 3px rgba(92, 184, 165, 0.1);
+    background: #ffffff;
+}
+
+.form-control option {
+    background: #ffffff;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #5CB8A5, #7DD3C0);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(92, 184, 165, 0.25);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(92, 184, 165, 0.35);
+    filter: brightness(1.05);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+/* Floating Particles */
+.float-particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translateY(0) scale(0); }
+    10% { opacity: 0.6; transform: translateY(-10vh) scale(1); }
+    90% { opacity: 0.3; }
+    100% { opacity: 0; transform: translateY(-100vh) scale(0.5); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* Container */
+.notif-container {
+    margin-top: 30px;
+}
+
+/* Title */
+.notif-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #1a3a35;
+}
+
+/* Card Base */
+.notif-card {
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+
+    border: 1px solid rgba(255,255,255,0.4);
+
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.notif-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Message */
+.notif-message {
+    font-size: 15px;
+    margin: 8px 0;
+    color: #2c4a45;
+}
+
+/* Footer */
+.notif-footer {
+    font-size: 12px;
+    color: #6b8f89;
+}
+
+/* Priority Colors */
+.notif-card.high {
+    border-left: 5px solid #ff4b4b;
+    background: rgba(255, 75, 75, 0.08);
+}
+
+.notif-card.medium {
+    border-left: 5px solid #f4b400;
+    background: rgba(244, 180, 0, 0.08);
+}
+
+.notif-card.low {
+    border-left: 5px solid #34a853;
+    background: rgba(52, 168, 83, 0.08);
+}
+
+/* Priority Badge */
+.notif-priority {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    background: rgba(0,0,0,0.05);
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- 3D Background Canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Gradient Overlay -->
+<div class="overlay"></div>
+
+<!-- Floating CSS Particles -->
+<div id="css-particles"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8m0 0v8m0-8h8m-8 0H4"/><circle cx="12" cy="12" r="10" stroke-dasharray="4 3"/></svg>
+        Admin Panel
+    </h2>
+
+    <div class="menu">
+        <h4>Main</h4>
+        <a href="/admin_dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+
+        <h4>Management</h4>
+        <a href="/admin_users">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Users
+        </a>
+        <a href="/admin_reports">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Reports
+        </a>
+        <a href="/admin_feedback">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Feedback
+        </a>
+
+        <h4>Analytics</h4>
+        <a href="/admin_analytics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V10"/><path d="M6 20V10"/><path d="M12 20a2 2 0 0 1-2 2 2 2 0 0 1 2 2 2 2 0 0 1 2-2 2 2 0 0 1 2 2z"/><path d="M12 10V2"/></svg>
+            Analytics
+        </a>
+         <h4>AI Model</h4>
+        <a href="/admin_model">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Train Model
+        </a>
+        <h4>Settings</h4>
+        <a href="/admin_settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+        </a>
+        
+        <!-- ✅ ACTIVE STATE MOVED HERE -->
+        <a href="/admin_notifications" class="active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            Send Notifications
+        </a>
+        
+        <a href="/admin_logout" class="logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 21 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+        </a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="header">
+        🔔 Notifications
+    </div>
+
+    <div class="content">
+        
+        <!-- FORM WRAPPER -->
+        <div class="form-wrapper">
+            
+            <div class="form-header">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Send Notification
+            </div>
+            
+
+            <form action="/send_notification" method="POST">
+
+                <div class="form-group">
+                    <label class="form-label">User:</label>
+                    <select name="user" class="form-control">
+                        <option value="ALL">All Users</option>
+                        {% for u in users_list %}
+                            <option value="{{ u[0] }}">{{ u[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Priority:</label>
+                    <select name="priority" class="form-control">
+                        <option value="High">🔴 High</option>
+                        <option value="Medium">🟡 Medium</option>
+                        <option value="Low">🟢 Low</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Message:</label>
+                    <textarea name="message" placeholder="Enter message..." required class="form-control" rows="5"></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Send Notification
+                </button>
+
+            </form>
+
+  <div class="notif-container">
+    <h3 class="notif-title">📩 Recently Sent Notifications</h3>
+
+    {% for n in notifications %}
+    <div class="notif-card {{ n[2]|lower }}">
+        
+        <div class="notif-header">
+            <span class="notif-user">👤 {{ n[0] }}</span>
+            <span class="notif-priority">{{ n[2] }}</span>
+        </div>
+
+        <div class="notif-message">
+            {{ n[1] }}
+        </div>
+
+        <div class="notif-footer">
+            🕒 {{ n[3] }}
+        </div>
+        
+
+    </div>
+    {% endfor %}
+</div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ── CSS FLOATING PARTICLES ──
+(function createCSSParticles() {
+    const container = document.getElementById('css-particles');
+    const colors = [
+        'rgba(92, 184, 165, 0.4)',
+        'rgba(125, 211, 192, 0.35)',
+        'rgba(180, 220, 210, 0.3)',
+        'rgba(168, 216, 234, 0.3)'
+    ];
+
+    for (let i = 0; i < 15; i++) {
+        const p = document.createElement('div');
+        p.classList.add('float-particle');
+        const size = Math.random() * 6 + 3;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.background = color;
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.bottom = '-10px';
+        p.style.animationDuration = (Math.random() * 12 + 10) + 's';
+        p.style.animationDelay = (Math.random() * 10) + 's';
+        container.appendChild(p);
+    }
+})();
+
+// ── THREE.JS 3D BACKGROUND ──
+(function initThreeJS() {
+    const canvas = document.getElementById('bg-canvas');
+    const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        antialias: true,
+        alpha: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 30;
+
+    const palette = [
+        new THREE.Color(0x5CB8A5),
+        new THREE.Color(0x7DD3C0),
+        new THREE.Color(0xB4DCD2),
+        new THREE.Color(0xA8D8EA),
+        new THREE.Color(0xD4E8E3)
+    ];
+
+    const nodeCount = 40;
+    const nodes = [];
+    const nodeGroup = new THREE.Group();
+    const sphereGeo = new THREE.SphereGeometry(0.25, 16, 16);
+
+    for (let i = 0; i < nodeCount; i++) {
+        const mat = new THREE.MeshBasicMaterial({
+            color: palette[Math.floor(Math.random() * palette.length)],
+            transparent: true,
+            opacity: 0.6
+        });
+        const mesh = new THREE.Mesh(sphereGeo, mat);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const r = 8 + Math.random() * 18;
+        mesh.position.set(
+            r * Math.sin(phi) * Math.cos(theta),
+            r * Math.sin(phi) * Math.sin(theta),
+            r * Math.cos(phi)
+        );
+        mesh.userData = {
+            originalPos: mesh.position.clone(),
+            speed: 0.3 + Math.random() * 0.5,
+            offset: Math.random() * Math.PI * 2,
+            amplitude: 0.5 + Math.random() * 1.5
+        };
+        nodeGroup.add(mesh);
+        nodes.push(mesh);
+    }
+    scene.add(nodeGroup);
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x5CB8A5,
+        transparent: true,
+        opacity: 0.08
+    });
+    const lineGeometry = new THREE.BufferGeometry();
+    const linePositions = [];
+
+    function updateLines() {
+        linePositions.length = 0;
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dist = nodes[i].position.distanceTo(nodes[j].position);
+                if (dist < 8) {
+                    linePositions.push(
+                        nodes[i].position.x, nodes[i].position.y, nodes[i].position.z,
+                        nodes[j].position.x, nodes[j].position.y, nodes[j].position.z
+                    );
+                }
+            }
+        }
+        lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    }
+    const linesMesh = new THREE.LineSegments(lineGeometry, lineMaterial);
+    scene.add(linesMesh);
+
+    function createHelix(offset, color, radius) {
+        const points = [];
+        const helixRadius = radius || 3.5;
+        const helixHeight = 45;
+        const turns = 3.5;
+        for (let i = 0; i < 220; i++) {
+            const t = i / 220;
+            const angle = t * Math.PI * 2 * turns + offset;
+            points.push(new THREE.Vector3(
+                Math.cos(angle) * helixRadius,
+                (t - 0.5) * helixHeight,
+                Math.sin(angle) * helixRadius
+            ));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.15 });
+        return new THREE.Line(geo, mat);
+    }
+
+    const helix1 = createHelix(0, 0x5CB8A5, 4);
+    const helix2 = createHelix(Math.PI, 0xB4DCD2, 4);
+    helix1.rotation.z = 0.2;
+    helix2.rotation.z = 0.2;
+    helix1.position.x = -15;
+    helix2.position.x = -15;
+    scene.add(helix1);
+    scene.add(helix2);
+
+    const ringGroup = new THREE.Group();
+    const ringGeo = new THREE.TorusGeometry(0.3, 0.05, 8, 24);
+    for (let i = 0; i < 10; i++) {
+        const mat = new THREE.MeshBasicMaterial({
+            color: palette[Math.floor(Math.random() * palette.length)],
+            transparent: true,
+            opacity: 0.3
+        });
+        const ring = new THREE.Mesh(ringGeo, mat);
+        ring.position.set(
+            (Math.random() - 0.5) * 50,
+            (Math.random() - 0.5) * 30,
+            (Math.random() - 0.5) * 20 - 5
+        );
+        ring.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        ring.scale.setScalar(0.5 + Math.random());
+        ring.userData = {
+            rotSpeed: { x: (Math.random() - 0.5) * 0.01, y: (Math.random() - 0.5) * 0.01 },
+            floatSpeed: 0.2 + Math.random() * 0.3,
+            floatOffset: Math.random() * Math.PI * 2
+        };
+        ringGroup.add(ring);
+    }
+    scene.add(ringGroup);
+
+    let mouseX = 0, mouseY = 0, targetMouseX = 0, targetMouseY = 0;
+    document.addEventListener('mousemove', (e) => {
+        targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+        targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    let time = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+        time += 0.005;
+
+        mouseX += (targetMouseX - mouseX) * 0.03;
+        mouseY += (targetMouseY - mouseY) * 0.03;
+
+        nodeGroup.rotation.y = mouseX * 0.1;
+        nodeGroup.rotation.x = mouseY * 0.05;
+
+        nodes.forEach(node => {
+            const d = node.userData;
+            node.position.x = d.originalPos.x + Math.sin(time * d.speed + d.offset) * d.amplitude;
+            node.position.y = d.originalPos.y + Math.cos(time * d.speed * 0.7 + d.offset) * d.amplitude;
+            node.position.z = d.originalPos.z + Math.sin(time * d.speed * 0.5 + d.offset + 1) * d.amplitude * 0.5;
+        });
+
+        updateLines();
+
+        helix1.rotation.y = time * 0.2 + mouseX * 0.1;
+        helix2.rotation.y = time * 0.2 + mouseX * 0.1;
+
+        ringGroup.children.forEach(ring => {
+            ring.rotation.x += ring.userData.rotSpeed.x;
+            ring.rotation.y += ring.userData.rotSpeed.y;
+            ring.position.y += Math.sin(time * ring.userData.floatSpeed + ring.userData.floatOffset) * 0.003;
+        });
+
+        camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.02;
+        camera.position.y += (-mouseY * 1.5 - camera.position.y) * 0.02;
+        camera.lookAt(scene.position);
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    lucide.createIcons();
+})();
+</script>
+
+</body>
+</html>
