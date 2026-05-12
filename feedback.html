@@ -1,0 +1,99 @@
+{% extends "user_layout.html" %}
+
+{% block title %}
+Feedback — MedAI Predict
+{% endblock %}
+
+{% block header %}
+Feedback
+{% endblock %}
+
+{% block content %}
+
+<div class="feedback-container">
+
+    <div class="feedback-box">
+        <h2>Share Your Feedback</h2>
+        <p>Your feedback helps us improve the system</p>
+
+        <!-- SUCCESS MESSAGE -->
+        {% if message %}
+        <div class="success-msg">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <!-- FORM -->
+        <form method="POST" action="/submit_feedback">
+
+            <textarea name="message" placeholder="Write your feedback here..." required></textarea>
+
+            <button type="submit">Submit Feedback</button>
+
+        </form>
+    </div>
+
+</div>
+
+<style>
+.feedback-container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* BOX */
+.feedback-box{
+    width:500px;
+    background:rgba(255,255,255,0.75);
+    backdrop-filter:blur(24px);
+    border-radius:20px;
+    padding:30px;
+    text-align:center;
+}
+
+/* TITLE */
+.feedback-box h2{
+    font-family:'Outfit';
+    margin-bottom:5px;
+}
+
+.feedback-box p{
+    font-size:13px;
+    color:#7a9e98;
+    margin-bottom:20px;
+}
+
+/* TEXTAREA */
+textarea{
+    width:100%;
+    height:120px;
+    border-radius:10px;
+    border:1px solid #dcebea;
+    padding:12px;
+    resize:none;
+    margin-bottom:15px;
+}
+
+/* BUTTON */
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(135deg,#5CB8A5,#7DD3C0);
+    color:white;
+    font-weight:500;
+}
+
+/* SUCCESS */
+.success-msg{
+    background:#e6f7f3;
+    color:#2bb673;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+}
+</style>
+
+{% endblock %}
