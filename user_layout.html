@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{% block title %}User Panel{% endblock %}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#dceee8;
+    color:#1a3a35;
+    overflow:hidden;
+}
+
+/* ═══════════════════════════════════════
+   BACKGROUND LAYER SYSTEM
+   ═══════════════════════════════════════ */
+
+.bg-base{
+    position:fixed;inset:0;z-index:0;
+    background:linear-gradient(160deg,#c8e6dc 0%,#dceee8 25%,#e4f0eb 50%,#d6e8e0 75%,#c2ddd4 100%);
+}
+
+.bg-grid{
+    position:fixed;inset:0;z-index:1;pointer-events:none;
+    background-image:radial-gradient(circle,rgba(92,184,165,0.14) 1px,transparent 1px);
+    background-size:32px 32px;
+    mask-image:radial-gradient(ellipse at center,black 20%,transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse at center,black 20%,transparent 80%);
+}
+
+.bg-orbs{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform}
+.orb-1{width:600px;height:600px;background:radial-gradient(circle,rgba(92,184,165,0.38) 0%,rgba(92,184,165,0.08) 50%,transparent 70%);top:-10%;left:-8%;animation:oF1 18s ease-in-out infinite}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,rgba(168,216,234,0.32) 0%,rgba(168,216,234,0.06) 50%,transparent 70%);top:10%;right:-10%;animation:oF2 22s ease-in-out infinite}
+.orb-3{width:450px;height:450px;background:radial-gradient(circle,rgba(125,211,192,0.30) 0%,rgba(125,211,192,0.05) 50%,transparent 70%);bottom:-15%;left:30%;animation:oF3 20s ease-in-out infinite}
+.orb-4{width:350px;height:350px;background:radial-gradient(circle,rgba(232,165,152,0.20) 0%,rgba(232,165,152,0.03) 50%,transparent 70%);top:50%;left:10%;animation:oF4 25s ease-in-out infinite}
+.orb-5{width:400px;height:400px;background:radial-gradient(circle,rgba(180,220,210,0.32) 0%,rgba(180,220,210,0.05) 50%,transparent 70%);bottom:5%;right:15%;animation:oF5 16s ease-in-out infinite}
+
+@keyframes oF1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(80px,60px) scale(1.1)}66%{transform:translate(-40px,100px) scale(0.95)}}
+@keyframes oF2{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-70px,80px) scale(1.08)}66%{transform:translate(50px,-60px) scale(0.92)}}
+@keyframes oF3{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-90px) scale(1.15)}66%{transform:translate(-80px,-30px) scale(0.9)}}
+@keyframes oF4{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(100px,50px) scale(1.2)}}
+@keyframes oF5{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(-90px,-70px) scale(1.1)}80%{transform:translate(40px,40px) scale(0.95)}}
+
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2}
+
+.bg-vignette{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(200,225,215,0.45) 100%)}
+
+.bg-noise{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:128px 128px}
+
+#css-particles{position:fixed;inset:0;z-index:5;pointer-events:none}
+.fp{position:fixed;border-radius:50%;pointer-events:none;opacity:0;animation:fUp linear infinite}
+@keyframes fUp{0%{opacity:0;transform:translateY(0) scale(0)}8%{opacity:0.7;transform:translateY(-8vh) scale(1)}80%{opacity:0.2}100%{opacity:0;transform:translateY(-105vh) scale(0.3)}}
+
+.ecg-line{position:fixed;bottom:30px;left:260px;right:0;height:50px;z-index:5;pointer-events:none;opacity:0.1}
+.ecg-line svg{width:100%;height:100%}
+.ecg-path{fill:none;stroke:#5CB8A5;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1400;stroke-dashoffset:1400;animation:ecgD 4s ease-in-out infinite;filter:drop-shadow(0 0 3px rgba(92,184,165,0.4))}
+@keyframes ecgD{0%{stroke-dashoffset:1400;opacity:0}8%{opacity:1}65%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:-250;opacity:0}}
+
+/* ═══════════════════════════════════════
+   SIDEBAR — TRUE GLASS (background shows through)
+   ═══════════════════════════════════════ */
+
+.sidebar{
+    width:260px;
+    height:100vh;
+    position:fixed;
+    top:0;left:0;
+    z-index:10;
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    /* KEY CHANGE: very transparent + strong blur = glass effect */
+    background:rgba(255,255,255,0.25);
+    backdrop-filter:blur(40px) saturate(1.6);
+    -webkit-backdrop-filter:blur(40px) saturate(1.6);
+    border-right:1px solid rgba(255,255,255,0.2);
+
+    padding:28px 12px;
+    display:flex;
+    flex-direction:column;
+
+    animation:sidebarIn 0.8s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* Subtle inner glow on sidebar for depth */
+.sidebar::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:
+        radial-gradient(ellipse at 0% 20%,rgba(92,184,165,0.06) 0%,transparent 60%),
+        radial-gradient(ellipse at 100% 80%,rgba(168,216,234,0.04) 0%,transparent 60%);
+    z-index:0;
+}
+
+@keyframes sidebarIn{
+    0%{opacity:0;transform:translateX(-30px);filter:blur(4px)}
+    100%{opacity:1;transform:translateX(0);filter:blur(0)}
+}
+
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(92,184,165,0.12);border-radius:4px}
+.sidebar::-webkit-scrollbar-thumb:hover{background:rgba(92,184,165,0.22)}
+
+/* Brand */
+.sidebar-brand{
+    text-align:center;
+    padding:0 8px 20px;
+    border-bottom:1px solid rgba(92,184,165,0.08);
+    margin-bottom:8px;
+    position:relative;z-index:1;
+}
+
+.brand-icon{
+    width:44px;height:44px;border-radius:14px;
+    background:linear-gradient(145deg,rgba(92,184,165,0.8),rgba(125,211,192,0.7));
+    backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 10px;
+    box-shadow:0 4px 20px rgba(92,184,165,0.35);
+    font-size:20px;
+    position:relative;overflow:hidden;
+}
+.brand-icon::before{
+    content:'';position:absolute;inset:-50%;
+    background:conic-gradient(from 0deg,transparent,rgba(255,255,255,0.2),transparent);
+    animation:bShine 4s linear infinite;
+}
+@keyframes bShine{to{transform:rotate(360deg)}}
+
+.sidebar-brand h2{
+    font-family:'Outfit',sans-serif;
+    font-size:16px;font-weight:700;
+    color:rgba(26,58,53,0.9);letter-spacing:-0.2px;
+}
+
+.sidebar-brand .brand-sub{
+    font-size:10.5px;color:rgba(122,158,152,0.8);font-weight:500;
+    text-transform:uppercase;letter-spacing:2px;
+    display:flex;align-items:center;justify-content:center;gap:5px;
+    margin-top:4px;
+}
+.brand-dot{
+    width:5px;height:5px;border-radius:50%;background:#5CB8A5;
+    animation:sBlink 2s ease-in-out infinite;
+}
+@keyframes sBlink{0%,100%{opacity:0.4;box-shadow:none}50%{opacity:1;box-shadow:0 0 6px rgba(92,184,165,0.4)}}
+
+/* ── MENU ── */
+.menu{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding-bottom:16px;
+    position:relative;z-index:1;
+}
+
+.menu h4{
+    color:rgba(143,181,172,0.7);
+    margin:18px 0 6px 15px;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1.8px;
+    font-weight:600;
+}
+
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 15px;
+    margin:2px 6px;
+    border-radius:12px;
+    text-decoration:none;
+    color:rgba(74,124,116,0.85);
+    font-size:13.5px;
+    font-weight:500;
+    transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+    position:relative;
+    overflow:hidden;
+}
+.menu a i{
+    width:18px;height:18px;
+    flex-shrink:0;
+    transition:transform 0.3s;
+}
+
+/* Hover: glass chip appears behind link */
+.menu a::before{
+    content:'';position:absolute;inset:0;
+    background:rgba(255,255,255,0.35);
+    backdrop-filter:blur(8px);
+    border-radius:12px;opacity:0;
+    transition:opacity 0.3s;pointer-events:none;
+    border:1px solid rgba(255,255,255,0.3);
+}
+
+.menu a:hover{
+    color:#1a3a35;
+    transform:translateX(4px);
+}
+.menu a:hover::before{opacity:1}
+.menu a:hover i{transform:scale(1.1)}
+
+/* Active link */
+.menu a.active{
+    background:linear-gradient(135deg,rgba(92,184,165,0.85),rgba(74,168,149,0.85));
+    backdrop-filter:blur(8px);
+    color:white;
+    box-shadow:0 4px 20px rgba(92,184,165,0.3),inset 0 1px 0 rgba(255,255,255,0.2);
+    font-weight:600;
+    border:1px solid rgba(255,255,255,0.15);
+}
+.menu a.active::before{opacity:0}
+.menu a.active i{color:white}
+.menu a.active:hover{transform:translateX(2px)}
+
+/* ── LOGOUT ── */
+.logout{
+    margin-top:auto !important;
+    background:rgba(255,75,43,0.06) !important;
+    color:rgba(217,68,50,0.85) !important;
+    border:1px solid rgba(255,75,43,0.08);
+}
+.logout::before{display:none}
+.logout:hover{
+    background:linear-gradient(135deg,rgba(255,107,107,0.9),rgba(217,68,50,0.9)) !important;
+    backdrop-filter:blur(8px);
+    color:white !important;
+    box-shadow:0 4px 20px rgba(255,75,43,0.25);
+    transform:translateX(4px);
+    border-color:transparent;
+}
+
+/* ═══════════════════════════════════════
+   MAIN AREA
+   ═══════════════════════════════════════ */
+
+.main{
+    margin-left:260px;
+    height:100vh;
+    overflow-y:auto;
+    position:relative;
+    z-index:6;
+}
+
+.main::-webkit-scrollbar{width:6px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:rgba(92,184,165,0.12);border-radius:6px}
+.main::-webkit-scrollbar-thumb:hover{background:rgba(92,184,165,0.2)}
+
+/* Header */
+.header{
+    padding:28px 44px 20px;
+    position:sticky;top:0;z-index:8;
+    background:rgba(220,238,232,0.65);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(92,184,165,0.08);
+}
+
+.header h1{
+    font-family:'Outfit',sans-serif;
+    font-size:24px;
+    font-weight:700;
+    letter-spacing:-0.3px;
+}
+
+/* Content */
+.content{
+    padding:32px 44px 60px;
+    animation:contentIn 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+}
+@keyframes contentIn{
+    0%{opacity:0;transform:translateY(20px);filter:blur(4px)}
+    100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════ */
+
+.sidebar-toggle{
+    display:none;position:fixed;top:16px;left:16px;z-index:30;
+    width:42px;height:42px;border-radius:12px;
+    background:rgba(255,255,255,0.6);backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.4);
+    box-shadow:0 4px 16px rgba(0,0,0,0.08);
+    cursor:pointer;align-items:center;justify-content:center;
+    color:#1a3a35;transition:all 0.3s;
+}
+.sidebar-toggle:hover{background:rgba(255,255,255,0.85);transform:scale(1.05)}
+.sidebar-toggle svg{width:20px;height:20px}
+
+.sidebar-overlay{
+    display:none;position:fixed;inset:0;z-index:9;
+    background:rgba(0,0,0,0.25);backdrop-filter:blur(4px);
+    opacity:0;transition:opacity 0.3s;
+}
+.sidebar-overlay.show{opacity:1}
+
+@media(max-width:768px){
+    .sidebar-toggle{display:flex}
+    .sidebar{transform:translateX(-100%);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);z-index:15}
+    .sidebar.open{transform:translateX(0)}
+    .sidebar-overlay{display:block}
+    .main{margin-left:0}
+    .header{padding:20px 20px 16px 68px}
+    .header h1{font-size:20px}
+    .content{padding:24px 20px 60px}
+    .ecg-line{left:0}
+}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- ═══ BACKGROUND LAYERS ═══ -->
+<div class="bg-base"></div>
+<div class="bg-grid"></div>
+<div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="orb orb-5"></div>
+</div>
+<canvas id="bg-canvas"></canvas>
+<div class="bg-vignette"></div>
+<div class="bg-noise"></div>
+<div id="css-particles"></div>
+
+<div class="ecg-line">
+    <svg viewBox="0 0 1440 50" preserveAspectRatio="none">
+        <path class="ecg-path" d="M0,25 L180,25 L200,25 L218,8 L236,42 L254,5 L272,45 L290,25 L310,25 L530,25 L550,25 L568,8 L586,42 L604,5 L622,45 L640,25 L660,25 L880,25 L900,25 L918,8 L936,42 L954,5 L972,45 L990,25 L1010,25 L1230,25 L1250,25 L1268,8 L1286,42 L1304,5 L1322,45 L1340,25 L1440,25"/>
+    </svg>
+</div>
+
+<!-- ═══ SIDEBAR — ALL LINKS PRESERVED ═══ -->
+<div class="sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+        <div class="brand-icon">🧠</div>
+        <h2>User Panel</h2>
+        <div class="brand-sub">
+            <div class="brand-dot"></div>
+            Active Session
+        </div>
+    </div>
+
+    <div class="menu">
+        <h4>Main</h4>
+        <a href="/dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            Dashboard
+        </a>
+
+        <h4>Prediction</h4>
+        <a href="/heart">
+            <i data-lucide="heart"></i>
+            Heart Prediction
+        </a>
+
+        <a href="/diabetes">
+            <i data-lucide="activity"></i>
+            Diabetes Prediction
+        </a>
+
+        <h4>Reports</h4>
+        <a href="/history">
+            <i data-lucide="file-text"></i>
+            Medical History
+        </a>
+
+        <h4>Profile</h4>
+        <a href="/profile">
+            <i data-lucide="user"></i>
+            Profile
+        </a>
+
+        <a href="/feedback">
+            <i data-lucide="message-square"></i>
+            Feedback
+        </a>
+
+        <a href="/notifications">
+            <i data-lucide="bell"></i>
+            Notifications
+        </a>
+
+        <a href="/logout" class="logout">
+            <i data-lucide="log-out"></i>
+            Logout
+        </a>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<!-- ═══ MAIN — BLOCKS PRESERVED ═══ -->
+<div class="main">
+    <div class="header">
+        <h1>{% block header %}Dashboard{% endblock %}</h1>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+const sidebar=document.getElementById('sidebar');
+const overlay=document.getElementById('sidebarOverlay');
+const toggle=document.getElementById('sidebarToggle');
+toggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show')});
+window.addEventListener('resize',()=>{if(window.innerWidth>768){sidebar.classList.remove('open');overlay.classList.remove('show')}});
+
+// ── CSS PARTICLES ──
+(function(){
+    const c=document.getElementById('css-particles');
+    const cols=['rgba(92,184,165,0.5)','rgba(125,211,192,0.4)','rgba(168,216,234,0.35)','rgba(232,165,152,0.25)','rgba(180,220,210,0.4)'];
+    for(let i=0;i<18;i++){
+        const p=document.createElement('div');p.classList.add('fp');
+        const sz=Math.random()*5+2;const col=cols[Math.floor(Math.random()*cols.length)];
+        p.style.width=sz+'px';p.style.height=sz+'px';p.style.background=col;
+        p.style.boxShadow=`0 0 ${sz*2.5}px ${col}`;
+        p.style.left=(Math.random()*100)+'vw';p.style.bottom='-10px';
+        p.style.animationDuration=(Math.random()*14+12)+'s';
+        p.style.animationDelay=(Math.random()*14)+'s';
+        c.appendChild(p);
+    }
+})();
+
+// ═══════════════════════════════════════
+// THREE.JS
+// ═══════════════════════════════════════
+(function(){
+    const canvas=document.getElementById('bg-canvas');
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setClearColor(0x000000,0);
+
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,1000);
+    camera.position.z=40;
+
+    const pal=[0x5CB8A5,0x7DD3C0,0xA8D8EA,0xE8A598,0xB4DCD2,0xD4E8E3];
+    const rp=()=>new THREE.Color(pal[Math.floor(Math.random()*pal.length)]);
+
+    const NC=55,nodes=[],nG=new THREE.Group();
+    const sG=new THREE.SphereGeometry(0.2,12,12);
+    for(let i=0;i<NC;i++){
+        const c=rp();const mat=new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.4+Math.random()*0.35});
+        const m=new THREE.Mesh(sG,mat);
+        const th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1),r=5+Math.random()*25;
+        m.position.set(r*Math.sin(ph)*Math.cos(th),r*Math.sin(ph)*Math.sin(th),r*Math.cos(ph));
+        m.userData={op:m.position.clone(),spd:0.15+Math.random()*0.4,off:Math.random()*Math.PI*2,amp:0.3+Math.random()*1.5,bOp:mat.opacity,pO:Math.random()*Math.PI*2};
+        nG.add(m);nodes.push(m);
+    }
+    scene.add(nG);
+
+    const lM=new THREE.LineBasicMaterial({color:0x5CB8A5,transparent:true,opacity:0.06});
+    const lG=new THREE.BufferGeometry();const lP=[];
+    function uL(){lP.length=0;for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){const d=nodes[i].position.distanceTo(nodes[j].position);if(d<7)lP.push(nodes[i].position.x,nodes[i].position.y,nodes[i].position.z,nodes[j].position.x,nodes[j].position.y,nodes[j].position.z)}lG.setAttribute('position',new THREE.Float32BufferAttribute(lP,3))}
+    scene.add(new THREE.LineSegments(lG,lM));
+
+    function mkH(o,col,rad){const pts=[];for(let i=0;i<280;i++){const t=i/280,a=t*Math.PI*2*3.5+o;pts.push(new THREE.Vector3(Math.cos(a)*rad,(t-0.5)*52,Math.sin(a)*rad))}return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.14}))}
+    const h1=mkH(0,0x5CB8A5,4),h2=mkH(Math.PI,0xA8D8EA,4);
+    h1.rotation.z=0.3;h2.rotation.z=0.3;h1.position.x=-18;h2.position.x=-18;scene.add(h1);scene.add(h2);
+
+    const rP=[];
+    for(let i=0;i<40;i++){const t=i/40,a=t*Math.PI*2*3.5,y=(t-0.5)*52,c=0.3;rP.push((Math.cos(a)*4-18)*Math.cos(c)-y*Math.sin(c),(Math.cos(a)*4-18)*Math.sin(c)+y*Math.cos(c),Math.sin(a)*4,(Math.cos(a+Math.PI)*4-18)*Math.cos(c)-y*Math.sin(c),(Math.cos(a+Math.PI)*4-18)*Math.sin(c)+y*Math.cos(c),Math.sin(a+Math.PI)*4)}
+    const rGe=new THREE.BufferGeometry();rGe.setAttribute('position',new THREE.Float32BufferAttribute(rP,3));
+    scene.add(new THREE.LineSegments(rGe,new THREE.LineBasicMaterial({color:0xB4DCD2,transparent:true,opacity:0.05})));
+
+    const hGr=new THREE.Group();
+    for(let i=0;i<10;i++){const sh=new THREE.Shape();const s=0.6+Math.random()*1;for(let j=0;j<6;j++){const a=j*Math.PI/3-Math.PI/6;j===0?sh.moveTo(Math.cos(a)*s,Math.sin(a)*s):sh.lineTo(Math.cos(a)*s,Math.sin(a)*s)}sh.closePath();const mat=new THREE.MeshBasicMaterial({color:rp(),transparent:true,opacity:0.04,side:THREE.DoubleSide});const mesh=new THREE.Mesh(new THREE.ShapeGeometry(sh),mat);mesh.position.set((Math.random()-0.5)*55,(Math.random()-0.5)*35,(Math.random()-0.5)*15-8);mesh.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);mesh.userData={rx:(Math.random()-0.5)*0.002,ry:(Math.random()-0.5)*0.002,fs:0.1+Math.random()*0.2,fo:Math.random()*Math.PI*2};hGr.add(mesh)}
+    scene.add(hGr);
+
+    const pG=new THREE.Group();const pR=[];
+    for(let i=0;i<3;i++){const g=new THREE.RingGeometry(0.4,0.6,48);const m=new THREE.MeshBasicMaterial({color:0x5CB8A5,transparent:true,opacity:0,side:THREE.DoubleSide});const mesh=new THREE.Mesh(g,m);mesh.position.set(18,0,-10);mesh.userData={phase:i*(Math.PI*2/3)};pG.add(mesh);pR.push(mesh)}
+    scene.add(pG);
+
+    let mx=0,my=0,tmx=0,tmy=0;
+    document.addEventListener('mousemove',e=>{tmx=(e.clientX/window.innerWidth-0.5)*2;tmy=(e.clientY/window.innerHeight-0.5)*2});
+    let sY=0;
+    document.querySelector('.main').addEventListener('scroll',()=>{sY=document.querySelector('.main').scrollTop});
+
+    let t=0;
+    (function anim(){
+        requestAnimationFrame(anim);t+=0.003;
+        mx+=(tmx-mx)*0.02;my+=(tmy-my)*0.02;
+        const sf=sY*0.0002;
+        nG.rotation.y=mx*0.1+sf;nG.rotation.x=my*0.05;
+        nodes.forEach(n=>{const d=n.userData;n.position.x=d.op.x+Math.sin(t*d.spd+d.off)*d.amp;n.position.y=d.op.y+Math.cos(t*d.spd*0.7+d.off)*d.amp;n.position.z=d.op.z+Math.sin(t*d.spd*0.5+d.off+1)*d.amp*0.3;n.material.opacity=d.bOp+Math.sin(t*1.5+d.pO)*0.1});
+        uL();
+        h1.rotation.y=t*0.15+mx*0.05;h2.rotation.y=t*0.15+mx*0.05;
+        hGr.children.forEach(h=>{h.rotation.x+=h.userData.rx;h.rotation.y+=h.userData.ry;h.position.y+=Math.sin(t*h.userData.fs+h.userData.fo)*0.001});
+        pR.forEach(pr=>{const ph=(t*0.6+pr.userData.phase)%(Math.PI*2);const sc=1+Math.sin(ph)*3.5;pr.scale.set(sc,sc,sc);pr.material.opacity=Math.max(0,(1-ph/(Math.PI*2))*0.08);pr.rotation.z=t*0.06});
+        camera.position.x+=(mx*2-camera.position.x)*0.012;camera.position.y+=(-my*1.5-camera.position.y)*0.012;
+        camera.lookAt(scene.position);
+        renderer.render(scene,camera);
+    })();
+
+    window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight)});
+})();
+</script>
+</body>
+</html>
