@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{% block title %}Admin{% endblock %}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#e8f4f0;
+    color:#1a3a35;
+    overflow:hidden;
+}
+
+/* ===== SIDEBAR FINAL FIX ===== */
+.sidebar{
+    width:260px;
+    height:100vh;
+    position:fixed;
+    top:0;
+
+    overflow-y:auto;
+    scroll-behavior:smooth;
+
+    background:rgba(255,255,255,0.65);
+    backdrop-filter:blur(24px);
+    border-right:1px solid rgba(255,255,255,0.5);
+
+    padding:30px 15px;
+    display:flex;
+    flex-direction:column;
+}
+
+/* SCROLLBAR */
+.sidebar::-webkit-scrollbar{width:6px;}
+.sidebar::-webkit-scrollbar-thumb{
+    background:#5CB8A5;
+    border-radius:10px;
+}
+
+/* MENU */
+.menu{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding-bottom:80px;
+}
+
+.menu h4{
+    color:#7a9e98;
+    margin:20px 0 10px 15px;
+    font-size:11px;
+    text-transform:uppercase;
+}
+
+/* LINKS */
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 15px;
+    margin:4px 8px;
+    border-radius:12px;
+    text-decoration:none;
+    color:#4a7c74;
+    font-size:14px;              /* FIXED FONT */
+    font-weight:500;
+    transition:0.3s;
+}
+
+.menu a svg{
+    width:18px;
+    height:18px;
+}
+
+/* HOVER */
+.menu a:hover{
+    background:rgba(92,184,165,0.1);
+    transform:translateX(4px);
+}
+
+/* ACTIVE */
+.menu a.active{
+    background:linear-gradient(135deg,#5CB8A5,#7DD3C0);
+    color:white;
+}
+
+/* LOGOUT */
+.logout{
+    margin-top:auto;
+    background:rgba(255,75,43,0.1);
+    color:#ff4b2b !important;
+}
+
+.logout:hover{
+    background:linear-gradient(135deg,#ff6b6b,#ff4b2b);
+    color:white !important;
+}
+
+/* ===== MAIN ===== */
+.main{
+    margin-left:260px;
+    height:100vh;
+    overflow-y:auto;
+}
+
+.header{
+    padding:24px 40px;
+    font-size:24px;
+    font-weight:600;
+}
+
+.content{
+    padding:30px 40px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8m0 0v8m0-8h8m-8 0H4"/><circle cx="12" cy="12" r="10" stroke-dasharray="4 3"/></svg>
+        Admin Panel
+    </h2>
+
+    <div class="menu">
+        <h4>Main</h4>
+        <a href="/admin_dashboard" class="active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+
+        <h4>Management</h4>
+        <a href="/admin_users">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Users
+        </a>
+        <a href="/admin_reports">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Reports
+        </a>
+        <a href="/admin_feedback">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Feedback
+        </a>
+
+        <h4>Analytics</h4>
+        <a href="/admin_analytics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V10"/><path d="M6 20V10"/><path d="M12 20a2 2 0 0 1-2 2 2 2 0 0 1 2 2 2 2 0 0 1 2-2 2 2 0 0 1 2 2z"/><path d="M12 10V2"/></svg>
+            Analytics
+        </a>
+         <h4>AI Model</h4>
+        <a href="/admin_model">Train Model</a>
+        <h4>Settings</h4>
+        <a href="/admin_settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+        </a>
+            <a href="/admin_notifications">
+            🔔 Send Notifications
+            </a>
+        
+        <a href="/admin_logout" class="logout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 21 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+        </a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="header">
+        {% block header %}Admin{% endblock %}
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+</body>
+</html>
