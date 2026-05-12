@@ -1,0 +1,54 @@
+{% extends "admin_layout.html" %}
+
+{% block header %}Model Status{% endblock %}
+
+{% block content %}
+
+<style>
+.status-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 500px;
+    margin: auto;
+}
+
+.success { color: #2ecc71; font-weight: 600; }
+.error { color: #e74c3c; font-weight: 600; }
+
+.btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #5CB8A5;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+}
+</style>
+
+<div class="status-card">
+
+    {% if action == "save" %}
+        <h2 class="success">
+            {{ model.capitalize() }} Model Saved Successfully 💾
+        </h2>
+
+    {% elif status %}
+        <h2 class="success">
+            {{ model.capitalize() }} Model Loaded Successfully ✅
+        </h2>
+
+    {% else %}
+        <h2 class="error">
+            {{ model.capitalize() }} Model Not Found ❌
+        </h2>
+    {% endif %}
+
+    <a href="/admin_model" class="btn">⬅ Back to Model Dashboard</a>
+
+</div>
+
+{% endblock %}
